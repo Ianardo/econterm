@@ -1,10 +1,8 @@
 import numpy as np
 import scipy.stats
-import tabulate
 from collections import defaultdict
 from datetime import date
 from econterm.models import OLSResult
-import random
 
 def to_quarterly(dates, values):
     quarter_dates = []
@@ -30,6 +28,9 @@ def pct_change(values):
 def log_diff(values):
     return np.log(values[1:]) - np.log(values[:-1])
 
+def log_diff_pct(values):
+    return log_diff(values) * 100
+
 def prepare(y_dates, y_values, y_freq, x_dates, x_values, x_freq, y_transform, x_transform):
     # if only one is quarterly, convert the other
     if y_freq != x_freq:
@@ -43,7 +44,7 @@ def prepare(y_dates, y_values, y_freq, x_dates, x_values, x_freq, y_transform, x
     x_values = x_transform(x_values)
     x_dates = x_dates[1:]
     
-    common, iy, ix = np.intersect1d(y_dates, x_dates, return_indices=True)
+    assert(len(y_values) == len(y_dates) and len(x_values) == len(x_dates))
 
     dates, iy, ix = np.intersect1d(y_dates, x_dates, return_indices=True)
     y = y_values[iy]
