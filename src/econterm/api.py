@@ -6,8 +6,7 @@ from time import sleep
 from functools import wraps
 from dotenv import load_dotenv, find_dotenv
 from pathlib import Path
-from dataclasses import dataclass
-
+from econterm.models import Observation, SeriesInfo
 import time
 
 def retry(retries=3, base_delay=1):
@@ -44,11 +43,6 @@ class RateLimited(FredApiError):
     def __init__(self, message="Rate limited by FRED API."):
         super().__init__(message)
 
-@dataclass
-class Observation:
-    date: str
-    value: float
-
 @retry()
 async def fetch_series(series_id, start, end, client, sem):
     out = []
@@ -69,8 +63,7 @@ async def fetch_series(series_id, start, end, client, sem):
         
         match data.status_code:
             case 200:
-                dataJson = data.json()
-                observations = dataJson.get('observations')
+                observations = data.json().get('observations')
                 for observation in observations:
                     out.append(
                         Observation(observation.get("date"), float(observation.get("value")))
@@ -83,12 +76,44 @@ async def fetch_series(series_id, start, end, client, sem):
         
     return out
 
+@retry()
+async def fetch_series_info(series_id, client, sem):
+    load_dotenv(find_dotenv())
+    API_KEY = os.getenv("FRED_API_KEY")
+    URL = "https://api.stlouisfed.org/fred/series"
+    params = {
+        "api_key": API_KEY,
+        "file_type": 'json',
+        "series_id": series_id
+    }
+    async with sem:
+        print(f"Fetching metadata: {series_id}...")
+        data = await client.get(URL, params=params) 
+        
+        match data.status_code:
+            case 200:
+                info = data.json()["seriess"][0]
+                print(f"Successfully fetched metadata for {series_id}!")
+                return SeriesInfo(
+                    series_id=info["id"],
+                    title=info["title"],
+                    units=info["units"],
+                    frequency=info["frequency"],
+                    last_updated=info["last_updated"],
+                )
+            case 400 | 404:
+                raise SeriesNotFound(series_id)
+            case 429:
+                raise RateLimited()
+
 # async def main():
 #     CONCURRENCY_LIMIT = 5
 #     sem = asyncio.Semaphore(CONCURRENCY_LIMIT)
 #     series = ['GDP', 'UNRATE', 'CPIAUCSL']
 #     async with httpx.AsyncClient() as client:
-#         tasks = [fetch_series(series_id, "2000-01-01", "2001-01-01", client, sem) for series_id in series]
+#         # tasks = [fetch_series(series_id, "2000-01-01", "2001-01-01", client, sem) for series_id in series]
+#         tasks = [fetch_series_info(series_id, client, sem) for series_id in series]
 #         results = await asyncio.gather(*tasks)
+#         print(results)
     
 # asyncio.run(main())

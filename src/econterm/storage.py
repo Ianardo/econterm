@@ -1,8 +1,7 @@
 import sqlite3
 from pathlib import Path
 from contextlib import contextmanager
-
-DB_PATH = Path(__file__).parent / "econterm.db"
+from econterm.models import Observation, SeriesInfo
 
 class Repository:
     def __init__(self, db_path):
@@ -58,8 +57,9 @@ class Repository:
             WHERE series_id = ?
             ORDER BY date
         """, (series_id,))
-        return cur.fetchall()
-
+        rows = cur.fetchall()
+        return [Observation(date=row["date"], value=row["value"]) for row in rows]
+    
     def list_series(self):
         cur = self.conn.cursor()
         cur.execute("""
@@ -67,7 +67,34 @@ class Repository:
             FROM series
             ORDER BY series_id
         """)
-        return cur.fetchall()
+        return [
+            SeriesInfo(
+                series_id=row["series_id"],
+                title=row["title"],
+                units=row["units"],
+                frequency=row["frequency"],
+                last_updated=row["last_updated"],
+            )
+            for row in cur.fetchall()
+        ]    
+        
+    def get_series_metadata(self, series_id):
+        cur = self.conn.cursor()
+        cur.execute("""
+            SELECT series_id, title, units, frequency, last_updated
+            FROM series
+            WHERE series_id = ?
+        """, (series_id,))
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return SeriesInfo(
+            series_id=row["series_id"],
+            title=row["title"],
+            units=row["units"],
+            frequency=row["frequency"],
+            last_updated=row["last_updated"],
+        )
     
     @contextmanager
     def transaction(self):

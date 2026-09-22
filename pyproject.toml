@@ -20,6 +20,7 @@ dev = [
     "statsmodels",
     "respx",
     "mypy",
+    "dotenv",
 ]
 
 [build-system]
