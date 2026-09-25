@@ -51,6 +51,10 @@ def _to_arrays(observations):
 def _fmt_time(dt):
     return dt.strftime("%Y-%m-%d %H:%M UTC")
 
+def _fmt_range(dates):
+    """'Jan 1980 – Oct 2010' from a datetime64 array."""
+    first, last = dates[0].astype(object), dates[-1].astype(object)
+    return f"{first:%b %Y} – {last:%b %Y}"
 
 def _save(fig, path):
     """Save a figure, creating its folder if needed, then close it."""
@@ -133,19 +137,23 @@ def plot(series_id, start, end, no_recessions, title):
 
     dates, values = _to_arrays(obs)
     dates, values = crop(dates, values, start=start, end=end)
-    
     if len(dates) == 0:
         raise click.ClickException(f"No {series_id} data between {start} and {end}.")
+
+    source = f"Source: FRED, Federal Reserve Bank of St. Louis ({series_id})."
+    if recessions:
+        source += " Shaded areas indicate U.S. recessions."
 
     fig = plot_series(
         dates,
         values,
         title=title or info.title,
+        subtitle=f"{info.frequency}, {_fmt_range(dates)}",
+        source=source,
         y_label=info.units,
         recessions=recessions,
     )
     _save(fig, Path("charts") / "series" / f"{series_id}.png")
-
 
 @cli.command()
 @click.argument("y_id")
@@ -203,11 +211,12 @@ def regress(y_id, x_id, y_transform, x_transform, start, end, no_plot):
             dates,
             result,
             title=f"{y_info.title} vs {x_info.title}",
+            subtitle=f"{_fmt_range(dates)}, n = {result.n}, R² = {result.r_squared:.2f}",
+            source=f"Source: FRED, Federal Reserve Bank of St. Louis ({y_id}, {x_id}).",
             x_label=f"{x_id} ({x_transform})",
             y_label=f"{y_id} ({y_transform})",
         )
         _save(fig, Path("charts") / "regressions" / f"{y_id}_{x_id}.png")
-
 
 @cli.command(name="list")
 def list_series_cmd():
