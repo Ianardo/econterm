@@ -27,6 +27,7 @@ dev = [
 
 [project.scripts]
 econterm = "econterm.cli:cli"
+et = "econterm.cli:cli"
 
 [build-system]
 requires = ["hatchling"]
