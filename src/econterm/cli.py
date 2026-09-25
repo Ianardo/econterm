@@ -72,7 +72,7 @@ def cli():
 @cli.command()
 @click.argument("series_ids", nargs=-1, required=True)
 def fetch(series_ids):
-    """Download SERIES_IDS from FRED and save them locally, e.g. GDPC1 UNRATE USREC."""
+    """Download SERIES_IDS from FRED and save them locally."""
 
     async def fetch_all():
         sem = asyncio.Semaphore(CONCURRENCY_LIMIT)
