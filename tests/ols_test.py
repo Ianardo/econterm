@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import statsmodels.api as sm
+
 from econterm.analysis import ols
 
 
@@ -13,13 +14,16 @@ def make_data(seed, n, k):
     return y, X
 
 
-@pytest.mark.parametrize("seed, n, k", [
-    (0, 20, 2),
-    (1, 50, 2),
-    (2, 100, 2),
-    (3, 30, 3),
-    (4, 200, 4),
-])
+@pytest.mark.parametrize(
+    "seed, n, k",
+    [
+        (0, 20, 2),
+        (1, 50, 2),
+        (2, 100, 2),
+        (3, 30, 3),
+        (4, 200, 4),
+    ],
+)
 def test_ols_matches_statsmodels(seed, n, k):
     y, X = make_data(seed, n, k)
     ours = ols(y, X)

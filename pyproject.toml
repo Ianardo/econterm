@@ -3,15 +3,17 @@ name = "econterm"
 version = "0.0.1"
 description = "a FRED research CLI with from-scratch regression analysis"
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.12"
 authors = [
     {name = "Ian Darby", email = "ian.lee.darby@gmail.com"}
 ]
 dependencies = [
+    "click",
     "httpx",
     "numpy",
     "matplotlib",
-    "click",
+    "scipy",
+    "python-dotenv",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +24,9 @@ dev = [
     "mypy",
     "dotenv",
 ]
+
+[project.scripts]
+econterm = "econterm.cli:cli"
 
 [build-system]
 requires = ["hatchling"]
