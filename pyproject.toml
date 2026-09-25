@@ -15,6 +15,7 @@ dependencies = [
     "scipy",
     "python-dotenv",
 ]
+license = "MIT"
 
 [project.optional-dependencies]
 dev = [
